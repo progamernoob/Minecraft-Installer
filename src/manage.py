@@ -390,6 +390,7 @@ class GameService(RCONService):
 				print('WARNING: Failed to find Java installation for game version %s: %s' % (new_value, str(e)), file=sys.stderr)
 			self.update()
 			self.build_systemd_config()
+			self.reload()
 		elif option == 'Service Memory':
 			self.apply_neoforge_runtime_settings()
 			self.build_systemd_config()
