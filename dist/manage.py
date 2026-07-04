@@ -589,9 +589,37 @@ class GameService(RCONService):
 			return '%s -Xmx%s -Xms%s -jar %s nogui' % (self.get_option_value('Service Java Path'), memory, memory, binary)
 		elif loader == 'neoforge':
 			args_file = self.get_neoforge_unix_args_file()
-			return '"%s" @user_jvm_args.txt @%s' % (self.get_option_value('Service Java Path'), args_file)
+			return '%s @user_jvm_args.txt @%s' % (self.get_option_value('Service Java Path'), args_file)
 
 		return '%s -Xmx%s -Xms%s -jar %s nogui' % (self.get_option_value('Service Java Path'), memory, memory, binary)
+
+	def build_systemd_config(self):
+		"""
+		Build the systemd service configuration and force ExecStart to match
+		this manager's computed executable.
+		:return:
+		"""
+		super().build_systemd_config()
+
+		service_file = '/etc/systemd/system/%s.service' % self.service
+		if not os.path.exists(service_file):
+			return
+
+		executable = self.get_executable()
+		lines = []
+		execstart_found = False
+		with open(service_file, 'r') as f:
+			for line in f:
+				if line.startswith('ExecStart='):
+					line = 'ExecStart=%s\n' % executable
+					execstart_found = True
+				lines.append(line)
+
+		if not execstart_found:
+			lines.append('ExecStart=%s\n' % executable)
+
+		with open(service_file, 'w') as f:
+			f.writelines(lines)
 
 	def get_target_version(self) -> str:
 		"""
