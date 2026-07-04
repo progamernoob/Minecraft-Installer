@@ -587,7 +587,8 @@ class GameService(RCONService):
 				binary = 'fabric-server-mc.%s-loader.%s-launcher.%s.jar' % (target_version, target_fabric_version, launcher_version)
 			return '%s -Xmx%s -Xms%s -jar %s nogui' % (self.get_option_value('Service Java Path'), memory, memory, binary)
 		elif loader == 'neoforge':
-			return '/bin/bash ./run.sh'
+			args_file = self.get_neoforge_unix_args_file()
+			return '"%s" @user_jvm_args.txt @%s' % (self.get_option_value('Service Java Path'), args_file)
 
 		return '%s -Xmx%s -Xms%s -jar %s nogui' % (self.get_option_value('Service Java Path'), memory, memory, binary)
 
@@ -754,7 +755,7 @@ class GameService(RCONService):
 			target_file = 'fabric-server-mc.%s-loader.%s-launcher.%s.jar' % (target_version, target_fabric_version, launcher_version)
 			return not os.path.exists(os.path.join(self.get_app_directory(), target_file))
 		elif loader == 'neoforge':
-			return not os.path.exists(os.path.join(self.get_app_directory(), 'run.sh'))
+			return not os.path.exists(os.path.join(self.get_app_directory(), self.get_neoforge_unix_args_file()))
 		else:
 			return False
 
@@ -842,8 +843,9 @@ class GameService(RCONService):
 				for filename in files:
 					utils.ensure_file_ownership(os.path.join(root, filename))
 
-			if not os.path.exists(os.path.join(self.get_app_directory(), 'run.sh')):
-				logging.error('NeoForge installation did not produce run.sh.')
+			unix_args_file = os.path.join(self.get_app_directory(), self.get_neoforge_unix_args_file())
+			if not os.path.exists(unix_args_file):
+				logging.error('NeoForge installation did not produce %s.', os.path.basename(unix_args_file))
 				return False
 
 			self.apply_neoforge_runtime_settings()
@@ -923,6 +925,13 @@ class GameService(RCONService):
 		else:
 			return 'none'
 
+	def get_neoforge_unix_args_file(self) -> str:
+		"""
+		Get the relative path to NeoForge's generated unix args file.
+		:return:
+		"""
+		return 'libraries/net/neoforged/neoforge/%s/unix_args.txt' % self.get_target_loader_version()
+
 	def get_memory_setting(self) -> str:
 		"""
 		Get the configured JVM memory allocation string.
@@ -940,20 +949,6 @@ class GameService(RCONService):
 		"""
 		if self.get_loader() != 'neoforge':
 			return
-
-		run_sh = os.path.join(self.get_app_directory(), 'run.sh')
-		if os.path.exists(run_sh):
-			java_path = self.get_option_value('Service Java Path')
-			lines = []
-			with open(run_sh, 'r') as f:
-				for line in f:
-					if line.startswith('exec java '):
-						line = 'exec "%s" %s' % (java_path, line[len('exec java '):])
-					lines.append(line.rstrip('\n'))
-
-			with open(run_sh, 'w') as f:
-				f.write('\n'.join(lines).rstrip() + '\n')
-			utils.ensure_file_ownership(run_sh)
 
 		user_jvm_args = os.path.join(self.get_app_directory(), 'user_jvm_args.txt')
 		if not os.path.exists(user_jvm_args):
