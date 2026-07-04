@@ -403,11 +403,12 @@ class GameService(RCONService):
 			self.update()
 			self.build_systemd_config()
 		elif option == 'Service Memory':
-			self.apply_memory_settings()
+			self.apply_neoforge_runtime_settings()
 			self.build_systemd_config()
 			self.reload()
 		elif option == 'Service Java Path':
 			# If the Java path is updated, generate a new systemd service file.
+			self.apply_neoforge_runtime_settings()
 			self.build_systemd_config()
 			self.reload()
 
@@ -705,7 +706,7 @@ class GameService(RCONService):
 
 		# Download the latest version of the game server
 		self.update()
-		self.apply_memory_settings()
+		self.apply_neoforge_runtime_settings()
 
 	def check_update_available(self) -> bool:
 		"""
@@ -845,7 +846,7 @@ class GameService(RCONService):
 				logging.error('NeoForge installation did not produce run.sh.')
 				return False
 
-			self.apply_memory_settings()
+			self.apply_neoforge_runtime_settings()
 
 		with open(loader_type_file, 'w') as f:
 			f.write(loader or 'none')
@@ -932,13 +933,27 @@ class GameService(RCONService):
 			return '1G'
 		return str(value).strip()
 
-	def apply_memory_settings(self):
+	def apply_neoforge_runtime_settings(self):
 		"""
-		Apply memory settings to any loader-specific files that need explicit JVM args.
+		Apply NeoForge-specific runtime settings after the installer generates its files.
 		:return:
 		"""
 		if self.get_loader() != 'neoforge':
 			return
+
+		run_sh = os.path.join(self.get_app_directory(), 'run.sh')
+		if os.path.exists(run_sh):
+			java_path = self.get_option_value('Service Java Path')
+			lines = []
+			with open(run_sh, 'r') as f:
+				for line in f:
+					if line.startswith('exec java '):
+						line = 'exec "%s" %s' % (java_path, line[len('exec java '):])
+					lines.append(line.rstrip('\n'))
+
+			with open(run_sh, 'w') as f:
+				f.write('\n'.join(lines).rstrip() + '\n')
+			utils.ensure_file_ownership(run_sh)
 
 		user_jvm_args = os.path.join(self.get_app_directory(), 'user_jvm_args.txt')
 		if not os.path.exists(user_jvm_args):

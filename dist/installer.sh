@@ -1308,6 +1308,13 @@ manager:
     type: str
     help: "The webhook URL for sending server status updates to a Discord channel."
 service:
+  - name: Service Game Version
+    section: System
+    key: game-version
+    type: str
+    default: latest
+    help: "The version of Minecraft to run on the server."
+    group: Settings
   - name: Service Mod Loader
     section: System
     key: mod-loader
@@ -1318,27 +1325,6 @@ service:
       - fabric
       - neoforge
     help: "Select the mod loader to use for this server."
-    group: Settings
-  - name: Service Java Path
-    section: System
-    key: java-path
-    type: str
-    default: /usr/bin/java
-    help: "The path to the Java executable used to run the Minecraft server."
-    group: Settings
-  - name: Service Memory
-    section: System
-    key: memory
-    type: str
-    default: 1G
-    help: "Amount of memory to assign to the server JVM, for example 1G or 4096M."
-    group: Settings
-  - name: Service Game Version
-    section: System
-    key: game-version
-    type: str
-    default: latest
-    help: "The version of Minecraft to run on the server."
     group: Settings
   - name: Service Fabric Mod Loader
     section: System
@@ -1353,6 +1339,20 @@ service:
     type: str
     default: none
     help: "If you want to use NeoForge, specify the NeoForge version here. Keep Service Game Version aligned with the matching Minecraft version."
+    group: Settings
+  - name: Service Java Path
+    section: System
+    key: java-path
+    type: str
+    default: /usr/bin/java
+    help: "The path to the Java executable used to run the Minecraft server."
+    group: Settings
+  - name: Service Memory
+    section: System
+    key: memory
+    type: str
+    default: 1G
+    help: "Amount of memory to assign to the server JVM, for example 1G or 4096M."
     group: Settings
 EOF
 	chown $GAME_USER:$GAME_USER "$GAME_DIR/configs.yaml"
