@@ -577,7 +577,7 @@ class GameService(RCONService):
 			return '%s -Xmx%s -Xms%s -jar %s nogui' % (self.get_option_value('Service Java Path'), memory, memory, binary)
 		elif loader == 'neoforge':
 			args_file = self.get_neoforge_unix_args_file()
-			return '%s @user_jvm_args.txt @%s' % (self.get_option_value('Service Java Path'), args_file)
+			return '%s @user_jvm_args.txt @%s nogui' % (self.get_option_value('Service Java Path'), args_file)
 
 		return '%s -Xmx%s -Xms%s -jar %s nogui' % (self.get_option_value('Service Java Path'), memory, memory, binary)
 
